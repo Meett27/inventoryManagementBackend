@@ -4,7 +4,7 @@ from app.models.product_category import Category
 
 category_bp = Blueprint('category', __name__)
 
-@category_bp.route('/categories', methods=['GET'])
+@category_bp.route('/getCategories', methods=['GET'])
 def get_categories():
     categories = Category.query.all()
     return jsonify([category.to_dict() for category in categories])
