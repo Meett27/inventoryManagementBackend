@@ -25,7 +25,7 @@ def create_supplier():
     return jsonify({"message": "Supplier created successfully."}), 201
 
 # Read all suppliers
-@supplier_bp.route('/suppliers', methods=['GET'])
+@supplier_bp.route('/getSuppliers', methods=['GET'])
 def get_suppliers():
     suppliers = Supplier.query.all()
     return jsonify([supplier.as_dict() for supplier in suppliers]), 200
