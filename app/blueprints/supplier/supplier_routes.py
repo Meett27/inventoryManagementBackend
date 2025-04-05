@@ -55,7 +55,7 @@ def update_supplier(supplier_id):
     return jsonify({"message": "Supplier updated successfully."}), 200
 
 # Delete a supplier by ID
-@supplier_bp.route('/suppliers/<int:supplier_id>', methods=['DELETE'])
+@supplier_bp.route('/delete_suppliers/<int:supplier_id>', methods=['DELETE'])
 def delete_supplier(supplier_id):
     supplier = Supplier.query.get_or_404(supplier_id)
     db.session.delete(supplier)

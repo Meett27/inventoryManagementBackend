@@ -12,7 +12,7 @@ class Product(db.Model):
     UnitPrice = db.Column(db.Float)
     UnitWeight = db.Column(db.Float)
     Size = db.Column(db.String(50))
-    Discount = db.Column(db.Float)
+    Discount = db.Column(db.Float, nullable=True)
     UnitsInStock = db.Column(db.Integer)
     UnitsonOrder = db.Column(db.Integer)
     ReorderLevel = db.Column(db.Integer)

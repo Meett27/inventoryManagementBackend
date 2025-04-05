@@ -15,5 +15,17 @@ class Supplier(db.Model):
     PaymentMethods = db.Column(db.String(100))
     DiscountType = db.Column(db.String(50))
     
-    def __repr__(self):
-        return f'<Supplier {self.CompanyName}>'
+    def to_dict(self):
+        return {
+            'SupplierID': self.SupplierID,
+            'CompanyName': self.CompanyName,
+            'ContactFname': self.ContactFname,
+            'ContactLname': self.ContactLname,
+            'ContactTitle': self.ContactTitle,
+            'Address': self.Address,
+            'Phone': self.Phone,
+            'Fax': self.Fax,
+            'Email': self.Email,
+            'PaymentMethods': self.PaymentMethods,
+            'DiscountType': self.DiscountType
+        }
