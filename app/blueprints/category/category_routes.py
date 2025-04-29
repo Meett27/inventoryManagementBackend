@@ -17,6 +17,7 @@ def get_category(id):
 @category_bp.route('/add_categories', methods=['POST'])
 def add_category():
     data = request.get_json()
+    print(data)
     new_category = Category(
         name=data['name'],
         description=data.get('description')

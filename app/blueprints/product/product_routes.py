@@ -8,84 +8,53 @@ product_bp = Blueprint('product', __name__)
 # Create a new product
 
 @product_bp.route('/addProducts', methods=['POST'])
-@cross_origin(origins="*") 
+@cross_origin(origins="*")
 def create_product():
     data = request.json
-    # Gatekeeping: Validate each field and assign default values if necessary
-    
+    errors = []
+
+    # Helper function to safely cast and validate
+    def try_cast(value, cast_type, field_name, required=True, default=None):
+        if value is None and not required:
+            return default
+        try:
+            return cast_type(value)
+        except (ValueError, TypeError):
+            errors.append(f"Invalid {field_name}, must be a {cast_type.__name__}")
+            return None
+
+    # Field validations
     product_name = data.get('ProductName')
     if not product_name or not isinstance(product_name, str):
-        return jsonify({'error': 'Invalid or missing ProductName'}), 400
+        errors.append('Invalid or missing ProductName')
 
-    product_description = data.get('ProductDescription', '')  # Default empty string if missing
+    product_description = data.get('ProductDescription', '')
     if not isinstance(product_description, str):
-        return jsonify({'error': 'Invalid ProductDescription'}), 400
+        errors.append('Invalid ProductDescription')
 
-    supplier_id = data.get('SupplierID')
-    try:
-        supplier_id = int(supplier_id)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid SupplierID, must be an integer'}), 400
+    supplier_id = try_cast(data.get('SupplierID'), int, 'SupplierID')
+    category_id = try_cast(data.get('CategoryID'), int, 'CategoryID')
+    quantity_per_unit = try_cast(data.get('QuantityPerUnit'), int, 'QuantityPerUnit')
+    unit_price = try_cast(data.get('UnitPrice'), float, 'UnitPrice')
+    unit_weight = try_cast(data.get('UnitWeight'), float, 'UnitWeight')
+    discount = try_cast(data.get('Discount', 0.0), float, 'Discount', required=False, default=0.0)
+    units_in_stock = try_cast(data.get('UnitsInStock'), int, 'UnitsInStock')
+    units_on_order = try_cast(data.get('UnitsonOrder', 0), int, 'UnitsonOrder', required=False, default=0)
+    reorder_level = try_cast(data.get('ReorderLevel'), int, 'ReorderLevel')
+    size = data.get('Size', None)  # Optional
+    note = data.get('Note', '')    # Optional
 
-    category_id = data.get('CategoryID')
-    try:
-        category_id = int(category_id)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid CategoryID, must be an integer'}), 400
-
-    quantity_per_unit = data.get('QuantityPerUnit')
-    try:
-        quantity_per_unit = int(quantity_per_unit)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid QuantityPerUnit, must be an integer'}), 400
-
-    unit_price = data.get('UnitPrice')
-    try:
-        unit_price = float(unit_price)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid UnitPrice, must be a float'}), 400
-
-    unit_weight = data.get('UnitWeight')
-    try:
-        unit_weight = float(unit_weight)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid UnitWeight, must be a float'}), 400
-
-    size = data.get('Size', None)  # Nullable field
-
-    discount = data.get('Discount', 0.0)  # Default to 0.0 if not provided
-    try:
-        discount = float(discount)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid Discount, must be a float'}), 400
-
-    units_in_stock = data.get('UnitsInStock')
-    try:
-        units_in_stock = int(units_in_stock)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid UnitsInStock, must be an integer'}), 400
-
-    units_on_order = data.get('UnitsonOrder', 0)  # Default to 0 if not provided
-    try:
-        units_on_order = int(units_on_order)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid UnitsonOrder, must be an integer'}), 400
-
-    reorder_level = data.get('ReorderLevel')
-    try:
-        reorder_level = int(reorder_level)
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid ReorderLevel, must be an integer'}), 400
-
-    product_available = data.get('ProductAvailable', True)  # Default to True if not provided
+    product_available = data.get('ProductAvailable', True)
     if not isinstance(product_available, bool):
-        return jsonify({'error': 'Invalid ProductAvailable, must be a boolean'}), 400
+        errors.append('Invalid ProductAvailable, must be a boolean')
 
-    note = data.get('Note', '')  # Optional field, default to empty string
-    
-    print(data, "This is coming from the frontend")
+    if errors:
+        print("Validation errors:", errors)
+        return jsonify({'errors': errors}), 400
 
-    # Now create the product after validation
+    print("Validated data received from frontend:", data)
+
+    # Create product object
     new_product = Product(
         ProductName=product_name,
         ProductDescription=product_description,
@@ -103,14 +72,15 @@ def create_product():
         Note=note
     )
 
-    # Add product to database
     try:
         db.session.add(new_product)
         db.session.commit()
         return jsonify({'message': 'Product created successfully!'}), 201
     except SQLAlchemyError as e:
         db.session.rollback()
+        print("Database Error:", str(e))
         return jsonify({'error': 'An error occurred while saving the product'}), 500
+
 
 # Read all products
 
@@ -128,8 +98,16 @@ def get_product(product_id):
     return jsonify(product.as_dict()), 200
 
 # Update a product by ID
-@product_bp.route('/updateProduct/<int:product_id>', methods=['PUT'])
+@product_bp.route('/updateProduct/<int:product_id>', methods=['PUT', 'OPTIONS'])
 def update_product(product_id):
+    if request.method == 'OPTIONS':
+        # Handle preflight CORS request
+        response = jsonify({"message": "Preflight OK"})
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'PUT,OPTIONS')
+        return response, 200
+    
     product = Product.query.get_or_404(product_id)
     data = request.json
     product.ProductName = data.get('ProductName', product.ProductName)
