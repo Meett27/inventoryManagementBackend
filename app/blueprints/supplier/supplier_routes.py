@@ -5,7 +5,7 @@ from app.models.supplier import Supplier
 supplier_bp = Blueprint('supplier', __name__)
 
 # Create a new supplier
-@supplier_bp.route('/add_suppliers', methods=['POST'])
+@supplier_bp.route('/create_supplier', methods=['POST'])
 def create_supplier():
     data = request.json
     new_supplier = Supplier(
@@ -24,6 +24,27 @@ def create_supplier():
     db.session.commit()
     return jsonify({"message": "Supplier created successfully."}), 201
 
+#add multiple suppliers
+@supplier_bp.route('/add_suppliers', methods=['POST'])
+def add_suppliers():
+    data = request.get_json()
+    for supplier_data in data:
+        new_supplier = Supplier(
+            CompanyName=supplier_data['CompanyName'],
+            ContactFname=supplier_data['ContactFname'],
+            ContactLname=supplier_data['ContactLname'],
+            ContactTitle=supplier_data['ContactTitle'],
+            Address=supplier_data['Address'],
+            Phone=supplier_data['Phone'],
+            Fax=supplier_data['Fax'],
+            Email=supplier_data['Email'],
+            PaymentMethods=supplier_data['PaymentMethods'],
+            DiscountType=supplier_data['DiscountType']
+        )
+        db.session.add(new_supplier)
+    db.session.commit()
+    return jsonify({"message": "Suppliers created successfully."}), 201
+
 # Read all suppliers
 @supplier_bp.route('/getSuppliers', methods=['GET'])
 def get_suppliers():
@@ -31,13 +52,13 @@ def get_suppliers():
     return jsonify([supplier.as_dict() for supplier in suppliers]), 200
 
 # Read a single supplier by ID
-@supplier_bp.route('/suppliers/<int:supplier_id>', methods=['GET'])
+@supplier_bp.route('/supplierById/<int:supplier_id>', methods=['GET'])
 def get_supplier(supplier_id):
     supplier = Supplier.query.get_or_404(supplier_id)
     return jsonify(supplier.as_dict()), 200
 
 # Update a supplier by ID
-@supplier_bp.route('/update_suppliers/<int:supplier_id>', methods=['PUT'])
+@supplier_bp.route('/update_supplier/<int:supplier_id>', methods=['PUT'])
 def update_supplier(supplier_id):
     supplier = Supplier.query.get_or_404(supplier_id)
     data = request.json
@@ -55,7 +76,7 @@ def update_supplier(supplier_id):
     return jsonify({"message": "Supplier updated successfully."}), 200
 
 # Delete a supplier by ID
-@supplier_bp.route('/delete_suppliers/<int:supplier_id>', methods=['DELETE'])
+@supplier_bp.route('/delete_supplier/<int:supplier_id>', methods=['DELETE'])
 def delete_supplier(supplier_id):
     supplier = Supplier.query.get_or_404(supplier_id)
     db.session.delete(supplier)
