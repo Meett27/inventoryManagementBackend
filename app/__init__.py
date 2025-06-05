@@ -7,6 +7,7 @@ from .blueprints.supplier.supplier_routes import supplier_bp
 from .blueprints.product.product_routes import product_bp
 from .blueprints.role.role_routes import role_bp
 from .blueprints.staff.staff_routes import staff_bp
+from .blueprints.customer.customer_routes import customer_bp
 
 def create_app():
     app = Flask(__name__)
@@ -27,6 +28,7 @@ def create_app():
     app.register_blueprint(product_bp, url_prefix='/api/product')
     app.register_blueprint(role_bp, url_prefix='/api/role')
     app.register_blueprint(staff_bp, url_prefix='/api/staff')
+    app.register_blueprint(customer_bp, url_prefix='/api/customer')
 
 
     #import models
@@ -35,5 +37,6 @@ def create_app():
     from .models import product
     from .models import role
     from .models import staff
+    from .models import customer
 
     return app
